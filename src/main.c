@@ -94,7 +94,7 @@ void print_title(char* text, TTF_Font* font) {
   // SDL_RenderCopy(renderer, message, NULL, &message_rect);
 
   SDL_FreeSurface(surfaceMessage);
-  // SDL_DestroyTexture(message);
+  SDL_DestroyTexture(message);
 
 
 }
