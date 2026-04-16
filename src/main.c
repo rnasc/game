@@ -9,6 +9,10 @@
 int game_is_running = FALSE;
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
+TTF_Font* sans_24 = NULL;
+TTF_Font* sans_16 = NULL;
+SDL_Surface* surfaceMessage = NULL;
+SDL_Texture* message = NULL;
 
 
 int last_frame_time = 0;
@@ -34,12 +38,14 @@ int init_window(void) {
   }
 
   window = SDL_CreateWindow(
-      NULL, 
+      "Hello", 
       SDL_WINDOWPOS_CENTERED,
       SDL_WINDOWPOS_CENTERED,
       WINDOW_WIDTH,
       WINDOW_HEIGHT,
-      SDL_WINDOW_BORDERLESS
+      0
+      // SDL_WINDOW_ALLOW_HIGHDPI
+      // SDL_WINDOW_BORDERLESS
   );
 
   if (!window) {
@@ -69,22 +75,26 @@ int int_random(int max) {
   return random;
 }
 
-void print_title(void) {
-  TTF_Font* sans = TTF_OpenFont("./OpenSans.ttf", 24);
+void print_title(char* text, TTF_Font* font) {
+
   SDL_Color font_color = {(int)0xFF, (int)0xFF, (int)0xFF};
-  SDL_Surface* surfaceMessage = TTF_RenderText_Solid(sans, "put your text here", font_color); 
-  SDL_Texture* message = SDL_CreateTextureFromSurface(renderer, surfaceMessage);
+  surfaceMessage = TTF_RenderText_Solid(font, text, font_color);
+  message = SDL_CreateTextureFromSurface(renderer, surfaceMessage);
 
   SDL_Rect message_rect; //create a rect
-  message_rect.x = 0;  //controls the rect's x coordinate 
-  message_rect.y = 0; // controls the rect's y coordinte
-  message_rect.w = 100; // controls the width of the rect
-  message_rect.h = 100; // controls the height of the rect
+  message_rect.x = PADDING;  //controls the rect's x coordinate 
+  message_rect.y = PADDING; // controls the rect's y coordinte
+  message_rect.w = WINDOW_HEIGHT * 0.5; // controls the width of the rect
+  message_rect.h = HEADER - surfaceMessage->h * 0.5; // controls the height of the rect
                         
-  SDL_RenderCopy(renderer, message, NULL, &message_rect);
+  SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // Make window bg black.
+  // SDL_RenderClear(renderer); // Paint screen black.
+  SDL_RenderCopy(renderer, message, NULL, &message_rect); // Add text to render queue.
+  // SDL_RenderPresent(renderer); // Render everything that's on the queue.
+  // SDL_RenderCopy(renderer, message, NULL, &message_rect);
 
   SDL_FreeSurface(surfaceMessage);
-  SDL_DestroyTexture(message);
+  // SDL_DestroyTexture(message);
 
 
 }
@@ -97,6 +107,19 @@ void setup(void) {
   ball.y = int_random(WINDOW_HEIGHT);
   ball.width = 15;
   ball.height = 15;
+
+
+  TTF_Init();
+  sans_24 = TTF_OpenFont("./OpenSans.ttf", 24);
+  if (!sans_24) {
+    fprintf(stderr, "TTF_OpenFont error: %s\n", TTF_GetError());
+    return;
+  }
+  sans_16 = TTF_OpenFont("./OpenSans.ttf", 16);
+  if (!sans_16) {
+    fprintf(stderr, "TTF_OpenFont error: %s\n", TTF_GetError());
+    return;
+  }
 }
 
 void process_input(void) {
@@ -161,16 +184,25 @@ void update(void) {
       ball.y += base_move * delta_time;
   }
 
-  if (ball.x > WINDOW_WIDTH ) ball.x = 0;
-  if (ball.x < 0            ) ball.x = WINDOW_WIDTH;
-  if (ball.y > WINDOW_HEIGHT) ball.y = 0;
-  if (ball.y < 0            ) ball.y = WINDOW_HEIGHT;
+  if (ball.x > GAME_WIDTH_END   ) ball.x = GAME_WIDTH_START;
+  if (ball.x < GAME_WIDTH_START ) ball.x = GAME_WIDTH_END;
+  if (ball.y > GAME_HEIGHT_END  ) ball.y = GAME_HEIGHT_START;
+  if (ball.y < GAME_HEIGHT_START) ball.y = GAME_HEIGHT_END;
 }
 
 
 void render(void) {
-  SDL_SetRenderDrawColor(renderer,  0, 0, 0, 255);
+  SDL_SetRenderDrawColor(renderer,  (int)0xC4, (int)0xC4, (int)0xC4, 255);
   SDL_RenderClear(renderer);
+
+  SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+  SDL_Rect bg_rect = {
+    GAME_WIDTH_START, 
+    GAME_HEIGHT_START,
+    GAME_WIDTH,
+    GAME_HEIGHT
+  };
+  SDL_RenderFillRect(renderer, &bg_rect);
 
   // Draw a rectangle
   SDL_SetRenderDrawColor(renderer,  255, 255, 255, 255);
@@ -182,11 +214,15 @@ void render(void) {
   };
 
   SDL_RenderFillRect(renderer, &ball_rect);
+  print_title("Super Snake", sans_24);
   // TODO: Here's where we can start
   SDL_RenderPresent(renderer);
 }
 
 void destroy_window(void) {
+  TTF_CloseFont(sans_24); 
+  TTF_CloseFont(sans_16);
+  TTF_Quit();
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);
   SDL_Quit();
@@ -201,7 +237,6 @@ int main(int argc, char* argv[]) {
     process_input();
     update();
     render();
-    print_title();
   }
 
 
