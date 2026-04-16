@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 #include "./constants.h"
 
 
@@ -12,12 +13,6 @@ SDL_Renderer* renderer = NULL;
 
 int last_frame_time = 0;
 int snake_size = 5;
-
-#define DIRECTION_VERTICAL_UP      0
-#define DIRECTION_VERTICAL_DOWN    1
-#define DIRECTION_HORIZONTAL_LEFT  3
-#define DIRECTION_HORIZONTAL_RIGHT 4
-
 int direction;
 
 struct position {
@@ -55,7 +50,7 @@ int init_window(void) {
   renderer = SDL_CreateRenderer(
     window, 
     -1, // Default display driver
-    0  // No special way of rendering
+     0  // No special way of rendering
   );
 
   if (!renderer) {
@@ -74,8 +69,29 @@ int int_random(int max) {
   return random;
 }
 
+void print_title(void) {
+  TTF_Font* sans = TTF_OpenFont("./OpenSans.ttf", 24);
+  SDL_Color font_color = {(int)0xFF, (int)0xFF, (int)0xFF};
+  SDL_Surface* surfaceMessage = TTF_RenderText_Solid(sans, "put your text here", font_color); 
+  SDL_Texture* message = SDL_CreateTextureFromSurface(renderer, surfaceMessage);
+
+  SDL_Rect message_rect; //create a rect
+  message_rect.x = 0;  //controls the rect's x coordinate 
+  message_rect.y = 0; // controls the rect's y coordinte
+  message_rect.w = 100; // controls the width of the rect
+  message_rect.h = 100; // controls the height of the rect
+                        
+  SDL_RenderCopy(renderer, message, NULL, &message_rect);
+
+  SDL_FreeSurface(surfaceMessage);
+  SDL_DestroyTexture(message);
+
+
+}
+
 void setup(void) {
   direction = int_random(4);
+
 
   ball.x = int_random(WINDOW_WIDTH);
   ball.y = int_random(WINDOW_HEIGHT);
@@ -113,11 +129,7 @@ void process_input(void) {
         default:
           break;
       }
-      // if (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE ||
-      //     event.key.keysym.scancode == SDL_SCANCODE_Q) {
-      //   game_is_running = FALSE;
-      // }
-      break;
+      return;
   }
 }
 void update(void) {
@@ -148,14 +160,11 @@ void update(void) {
     case DIRECTION_VERTICAL_DOWN:
       ball.y += base_move * delta_time;
   }
-  // ball.x += base_move * delta_time;
-  // ball.y += base_move * delta_time;
 
   if (ball.x > WINDOW_WIDTH ) ball.x = 0;
   if (ball.x < 0            ) ball.x = WINDOW_WIDTH;
   if (ball.y > WINDOW_HEIGHT) ball.y = 0;
   if (ball.y < 0            ) ball.y = WINDOW_HEIGHT;
-  // printf("ball.x: %i \t ball.y: %i\n", (int)ball.x, (int)ball.y);
 }
 
 
@@ -192,6 +201,7 @@ int main(int argc, char* argv[]) {
     process_input();
     update();
     render();
+    print_title();
   }
 
 
