@@ -69,7 +69,6 @@ int init_window(void) {
 
 // Retunrs a ramdom number from 0 to the received number
 int int_random(int max) {
-  srand(time(NULL));
   int random = rand() % max;
 
   return random;
@@ -100,21 +99,29 @@ void print_title(char* text, TTF_Font* font) {
 }
 
 void setup(void) {
+
+  // Resets thre 'randomness' when starting the app
+  srand(time(NULL));
+
   direction = int_random(4);
 
-
-  ball.x = int_random(WINDOW_WIDTH);
-  ball.y = int_random(WINDOW_HEIGHT);
+  ball.x = int_random(GAME_WIDTH);
+  ball.y = int_random(GAME_HEIGHT);
   ball.width = 15;
   ball.height = 15;
 
 
-  TTF_Init();
+  if (TTF_Init() == -1) {
+    fprintf(stderr, "Error initializing TTF: %s\n", TTF_GetError());
+    return;
+  }
+
   sans_24 = TTF_OpenFont("./OpenSans.ttf", 24);
   if (!sans_24) {
     fprintf(stderr, "TTF_OpenFont error: %s\n", TTF_GetError());
     return;
   }
+
   sans_16 = TTF_OpenFont("./OpenSans.ttf", 16);
   if (!sans_16) {
     fprintf(stderr, "TTF_OpenFont error: %s\n", TTF_GetError());
